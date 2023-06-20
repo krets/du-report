@@ -3,7 +3,10 @@ import json
 import os
 import sys
 import time
+import logging
 
+
+LOG = logging.getLogger('dureport')
 DEFAULT_DEPTH = 3
 class DuTree:
     def __init__(self, name=None, size=None, parent=None, depth=0):
@@ -119,38 +122,52 @@ def main():
     parser.add_argument('-d', '--debug', action='store_true', help='Enable debug mode')
     parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose mode')
     parser.add_argument('--depth', type=int, default=DEFAULT_DEPTH, help=f'Specify depth (default: {DEFAULT_DEPTH})')
-    parser.add_argument('-o', '--output', type=argparse.FileType('w'), default=sys.stdout, help=f'Specifiy output file to write json')
+    parser.add_argument('-o', '--output', type=str, default=None, help=f'Specifiy output file to write json')
 
-    parser.add_argument('file', nargs='?', type=argparse.FileType('r'), default=None,
+    parser.add_argument('file', nargs='?', type=str, default=None,
                         help='Input file (alternatively can read from pipe)')
     args = parser.parse_args()
 
     if args.file:
-        handler = args.file
+        handler = open(args.file, 'r')
     elif not sys.stdin.isatty():
         handler = sys.stdin
     else:
         parser.print_help()
         exit(1)
 
+    if args.output is not None:
+        output = open(args.output, 'w')
+    else:
+        output = sys.stdout
+
+    LOG.addHandler(logging.StreamHandler())
+    LOG.handlers[-1].setFormatter(logging.Formatter(logging.BASIC_FORMAT))
+
+    level = logging.WARNING
+    if args.verbose:
+        level = logging.INFO
+    if args.debug:
+        level = logging.DEBUG
+    LOG.setLevel(level)
 
     base = DuTree()
     start = time.time()
+    LOG.debug("Started processing input from %s", handler)
     for line in handler:
         size, path = line.strip().split('\t')
         leaf = base.get(path)
         leaf.size = int(size)
-        continue
     handler.close()
 
     stop = time.time()
-    msg = "%0.1f seconds to parse" % (stop - start)
-    print(msg)
+    LOG.debug("Tree built in %0.1f seconds", (stop - start))
 
     first_branch = base.find_first_branch()
-    DuTreeEncoder.depth = args.depth + first_branch.depth # depth past jobs folder
-    json.dump(first_branch, args.output, cls=DuTreeEncoder, indent=2)
-    args.output.close()
+    DuTreeEncoder.depth = args.depth + first_branch.depth  # Start depth from first branch
+    LOG.debug("Writing output to %s", args.output)
+    json.dump(first_branch, output, cls=DuTreeEncoder, indent=2)
+    output.close()
     pass
 
 if __name__ == '__main__':
