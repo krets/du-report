@@ -34,10 +34,42 @@
       float:right;
     }
 
+    .bar {
+      display: inline-block;
+      width: 0;
+      height: 11px;
+      background-color: #ffcc00;
+      clear: left;
+    }
+
     ul {
       list-style-type: none;
       padding-inline-start: .75em;
     }
+    ul.nested.expanded {
+      border-left: dotted 2px darkgrey;
+
+    }
+    body {
+      font-family: sans-serif;
+      background: dimgrey;
+      color: white;
+    }
+
+    li {
+      position: relative;
+      padding-left: 20px; /* Adjust the padding as needed */
+    }
+    li::before {
+        content: "";
+        position: absolute;
+        top: 25px;
+        left: -33px;
+        height: 1px;
+        width: 42px;
+        border-bottom: 2px dotted darkgray;
+    }
+
   </style>
 </head>
 <body>
@@ -60,6 +92,8 @@
     }
 
     function createCollapsibleTree(data, parentElement) {
+      var rootSize = data[0].size;
+
       var ul = document.createElement("ul");
       parentElement.appendChild(ul);
 
@@ -72,8 +106,20 @@
         var size = document.createElement("span");
         size.textContent = formatSize(item.size);
         size.classList.add('size')
+
+        var barContainer = document.createElement("div");
+        barContainer.classList.add('bar_container');
+
+        var bar = document.createElement("div");
+        var percentage = item.size / rootSize * 100;
+        bar.style.width = percentage + "%";
+        bar.classList.add('bar');
+
+        barContainer.appendChild(bar);
+        li.appendChild(barContainer)
         span.appendChild(size);
         li.appendChild(span);
+
 
         if (item.children && item.children.length > 0) {
           span.classList.add("collapsible");
@@ -100,6 +146,10 @@
       .then(jsonData => {
         var container = document.getElementById("container");
         createCollapsibleTree([jsonData], container);
+        var rootSpan = container.querySelector("span");
+        rootSpan.classList.add("expanded");
+        var nestedUl = rootSpan.nextElementSibling;
+        nestedUl.classList.add("expanded");
       })
       .catch(error => {
         console.error("Error loading JSON data:", error);
