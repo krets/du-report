@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Disk Usage Report</title>
+  <style>
+    /* CSS styles for the collapsible tree */
+    .collapsible {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .collapsible::before {
+      content: "\25B6";
+      display: inline-block;
+      margin-right: 6px;
+      transform: rotate(90deg);
+      transition: transform 0.2s;
+    }
+
+    .collapsed::before {
+      transform: rotate(0deg);
+    }
+
+    .nested {
+      display: none;
+      padding-left: 20px;
+    }
+
+    .expanded {
+      display: block; !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="container"></div>
+
+  <script>
+    // JavaScript code goes here
+    // ...
+
+    function formatSize(size) {
+      size = size * 1024
+
+      const units = ["B", "KiB", "MiB", "GiB", "TiB"];
+
+      let index = 0;
+      while (size >= 1024 && index < units.length - 1) {
+        size /= 1024;
+        index++;
+      }
+
+      return size.toFixed(1) + " " + units[index];
+    }
+
+    function createCollapsibleTree(data, parentElement) {
+      var ul = document.createElement("ul");
+      parentElement.appendChild(ul);
+
+      data.forEach(function (item) {
+        var li = document.createElement("li");
+        ul.appendChild(li);
+
+        var span = document.createElement("span");
+        span.classList.add("collapsible");
+        span.textContent = item.path + " (" + formatSize(item.size) + ")";
+        li.appendChild(span);
+
+        if (item.children && item.children.length > 0) {
+          var nestedUl = document.createElement("ul");
+          nestedUl.classList.add("nested");
+          li.appendChild(nestedUl);
+          createCollapsibleTree(item.children, nestedUl);
+        }
+      });
+    }
+
+    // Add event listener to handle collapsing/expanding
+    document.addEventListener("click", function(event) {
+      if (event.target.classList.contains("collapsible")) {
+        var nestedElement = event.target.nextElementSibling;
+        nestedElement.classList.toggle("expanded");
+        nestedElement.classList.toggle("collapsed");
+      }
+    });
+
+    // Load JSON data from file based on fragment or hash anchor
+    fetch(window.location.hash.slice(1))
+      .then(response => response.json())
+      .then(jsonData => {
+        var container = document.getElementById("container");
+        createCollapsibleTree([jsonData], container);
+      })
+      .catch(error => {
+        console.error("Error loading JSON data:", error);
+      });
+  </script>
+</body>
+</html>
