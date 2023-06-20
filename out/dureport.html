@@ -3,7 +3,6 @@
 <head>
   <title>Disk Usage Report</title>
   <style>
-    /* CSS styles for the collapsible tree */
     .collapsible {
       cursor: pointer;
       user-select: none;
@@ -17,7 +16,7 @@
       transition: transform 0.2s;
     }
 
-    .collapsed::before {
+    .expanded::before {
       transform: rotate(0deg);
     }
 
@@ -27,7 +26,17 @@
     }
 
     .expanded {
-      display: block; !important;
+      display: block !important;
+    }
+
+    .size {
+      display:inline-block;
+      float:right;
+    }
+
+    ul {
+      list-style-type: none;
+      padding-inline-start: .75em;
     }
   </style>
 </head>
@@ -35,8 +44,6 @@
   <div id="container"></div>
 
   <script>
-    // JavaScript code goes here
-    // ...
 
     function formatSize(size) {
       size = size * 1024
@@ -61,11 +68,15 @@
         ul.appendChild(li);
 
         var span = document.createElement("span");
-        span.classList.add("collapsible");
-        span.textContent = item.path + " (" + formatSize(item.size) + ")";
+        span.textContent = item.path;
+        var size = document.createElement("span");
+        size.textContent = formatSize(item.size);
+        size.classList.add('size')
+        span.appendChild(size);
         li.appendChild(span);
 
         if (item.children && item.children.length > 0) {
+          span.classList.add("collapsible");
           var nestedUl = document.createElement("ul");
           nestedUl.classList.add("nested");
           li.appendChild(nestedUl);
@@ -77,9 +88,9 @@
     // Add event listener to handle collapsing/expanding
     document.addEventListener("click", function(event) {
       if (event.target.classList.contains("collapsible")) {
+        event.target.classList.toggle("expanded")
         var nestedElement = event.target.nextElementSibling;
         nestedElement.classList.toggle("expanded");
-        nestedElement.classList.toggle("collapsed");
       }
     });
 
